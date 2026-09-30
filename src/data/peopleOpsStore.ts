@@ -4,6 +4,8 @@ import type {
   DepartmentDraft,
   Employee,
   EmployeeDraft,
+  Employment,
+  EmploymentDraft,
   JobRole,
   JobRoleDraft,
   Location,
@@ -16,6 +18,7 @@ export interface PeopleOpsState {
   employees: repo.Table<Employee>
   jobRoles: repo.Table<JobRole>
   locations: repo.Table<Location>
+  employments: repo.Table<Employment>
 }
 
 export class StoreError extends Error {
@@ -26,7 +29,7 @@ export class StoreError extends Error {
 }
 
 export function emptyState(): PeopleOpsState {
-  return { departments: [], employees: [], jobRoles: [], locations: [] }
+  return { departments: [], employees: [], jobRoles: [], locations: [], employments: [] }
 }
 
 /* ---------- Departments ---------- */
@@ -153,6 +156,45 @@ export function deleteLocation(state: PeopleOpsState, id: string): PeopleOpsStat
   return { ...state, locations: repo.remove(state.locations, id) }
 }
 
+/* ---------- Employments ---------- */
+
+export function listEmployments(state: PeopleOpsState): Employment[] {
+  return repo.list(state.employments)
+}
+
+export function getEmployment(state: PeopleOpsState, id: string): Employment | undefined {
+  return repo.get(state.employments, id)
+}
+
+export function createEmployment(state: PeopleOpsState, draft: EmploymentDraft): PeopleOpsState {
+  requireEmployee(state, draft.employeeId)
+  requireJobRole(state, draft.jobRoleId)
+  requireLocation(state, draft.locationId)
+  if (draft.endedOn == null) requireHeadcountCap(state, draft.locationId)
+  const employment: Employment = { id: nextId('employment'), ...draft }
+  return { ...state, employments: repo.insert(state.employments, employment) }
+}
+
+export function updateEmployment(
+  state: PeopleOpsState,
+  id: string,
+  patch: Partial<EmploymentDraft>,
+): PeopleOpsState {
+  const existing = requireEmployment(state, id)
+  if (patch.employeeId !== undefined) requireEmployee(state, patch.employeeId)
+  if (patch.jobRoleId !== undefined) requireJobRole(state, patch.jobRoleId)
+  if (patch.locationId !== undefined) requireLocation(state, patch.locationId)
+  const locationId = patch.locationId ?? existing.locationId
+  const endedOn = patch.endedOn !== undefined ? patch.endedOn : existing.endedOn
+  if (endedOn == null) requireHeadcountCap(state, locationId, id)
+  return { ...state, employments: repo.replace(state.employments, id, patch) }
+}
+
+export function deleteEmployment(state: PeopleOpsState, id: string): PeopleOpsState {
+  requireEmployment(state, id)
+  return { ...state, employments: repo.remove(state.employments, id) }
+}
+
 /* ---------- FK guards ---------- */
 
 function requireDepartment(state: PeopleOpsState, id: string): Department {
@@ -177,6 +219,33 @@ function requireLocation(state: PeopleOpsState, id: string): Location {
   const location = repo.get(state.locations, id)
   if (!location) throw new StoreError(`No location with id ${id}`)
   return location
+}
+
+function requireEmployment(state: PeopleOpsState, id: string): Employment {
+  const employment = repo.get(state.employments, id)
+  if (!employment) throw new StoreError(`No employment with id ${id}`)
+  return employment
+}
+
+function countActiveEmploymentsAtLocation(
+  state: PeopleOpsState,
+  locationId: string,
+  excludeId?: string,
+): number {
+  return state.employments.filter(
+    (employment) =>
+      employment.id !== excludeId &&
+      employment.locationId === locationId &&
+      employment.endedOn == null,
+  ).length
+}
+
+function requireHeadcountCap(state: PeopleOpsState, locationId: string, excludeId?: string): void {
+  const location = requireLocation(state, locationId)
+  const activeCount = countActiveEmploymentsAtLocation(state, locationId, excludeId)
+  if (activeCount + 1 > location.headcountCap) {
+    throw new StoreError(`Location "${location.name}" is at its headcount cap of ${location.headcountCap}`)
+  }
 }
 
 function requireBaseSalary(baseSalary: number): void {

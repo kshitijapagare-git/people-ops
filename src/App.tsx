@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import { DepartmentsPage } from './pages/DepartmentsPage'
 import { EmployeesPage } from './pages/EmployeesPage'
+import { EmploymentsPage } from './pages/EmploymentsPage'
 import { JobRolesPage } from './pages/JobRolesPage'
 import { LocationsPage } from './pages/LocationsPage'
 
-type View = 'departments' | 'employees' | 'jobRoles' | 'locations'
+type View = 'departments' | 'employees' | 'jobRoles' | 'locations' | 'employments'
 
 const navItems: { view: View; label: string; icon: string }[] = [
   { view: 'departments', label: 'Departments', icon: '🏢' },
   { view: 'employees', label: 'Employees', icon: '👤' },
   { view: 'jobRoles', label: 'Job Roles', icon: '💼' },
   { view: 'locations', label: 'Locations', icon: '📍' },
+  { view: 'employments', label: 'Employments', icon: '📋' },
 ]
 
 function viewFromHash(): View {
@@ -58,6 +60,7 @@ export function App() {
         {view === 'employees' && <EmployeesPage />}
         {view === 'jobRoles' && <JobRolesPage />}
         {view === 'locations' && <LocationsPage />}
+        {view === 'employments' && <EmploymentsPage />}
       </main>
     </div>
   )
