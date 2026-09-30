@@ -42,3 +42,42 @@ export interface Location {
 }
 
 export type LocationDraft = Omit<Location, 'id'>
+
+export interface OrgUnit {
+  id: string
+  name: string
+  /** null for a root org unit */
+  parentId: string | null
+}
+
+export type OrgUnitDraft = Omit<OrgUnit, 'id'>
+
+export type RequisitionStatus = 'DRAFT' | 'OPEN' | 'ON_HOLD' | 'CLOSED'
+
+export interface Requisition {
+  id: string
+  positionTitle: string
+  jobDescription: string
+  /** Stored as integer minor units (e.g. cents); never a float. */
+  salaryOffered: number
+  /** Local YYYY-MM-DD string */
+  openFrom: string
+  /** Local YYYY-MM-DD string */
+  openTo: string
+  status: RequisitionStatus
+  /** FK -> OrgUnit.id */
+  orgUnitId: string
+}
+
+export type RequisitionDraft = Omit<Requisition, 'id'>
+
+export type EmploymentStatus = 'ACTIVE' | 'INACTIVE'
+
+export interface Employment {
+  id: string
+  /** FK -> Employee.id */
+  employeeId: string
+  status: EmploymentStatus
+}
+
+export type EmploymentDraft = Omit<Employment, 'id'>

@@ -4,10 +4,16 @@ import type {
   DepartmentDraft,
   Employee,
   EmployeeDraft,
+  Employment,
+  EmploymentDraft,
   JobRole,
   JobRoleDraft,
   Location,
   LocationDraft,
+  OrgUnit,
+  OrgUnitDraft,
+  Requisition,
+  RequisitionDraft,
 } from '../types'
 import * as repo from './repository'
 
@@ -16,6 +22,9 @@ export interface PeopleOpsState {
   employees: repo.Table<Employee>
   jobRoles: repo.Table<JobRole>
   locations: repo.Table<Location>
+  orgUnits: repo.Table<OrgUnit>
+  employments: repo.Table<Employment>
+  requisitions: repo.Table<Requisition>
 }
 
 export class StoreError extends Error {
@@ -26,7 +35,15 @@ export class StoreError extends Error {
 }
 
 export function emptyState(): PeopleOpsState {
-  return { departments: [], employees: [], jobRoles: [], locations: [] }
+  return {
+    departments: [],
+    employees: [],
+    jobRoles: [],
+    locations: [],
+    orgUnits: [],
+    employments: [],
+    requisitions: [],
+  }
 }
 
 /* ---------- Departments ---------- */
@@ -153,6 +170,93 @@ export function deleteLocation(state: PeopleOpsState, id: string): PeopleOpsStat
   return { ...state, locations: repo.remove(state.locations, id) }
 }
 
+/* ---------- OrgUnits ---------- */
+
+export function listOrgUnits(state: PeopleOpsState): OrgUnit[] {
+  return repo.list(state.orgUnits)
+}
+
+export function getOrgUnit(state: PeopleOpsState, id: string): OrgUnit | undefined {
+  return repo.get(state.orgUnits, id)
+}
+
+export function createOrgUnit(state: PeopleOpsState, draft: OrgUnitDraft): PeopleOpsState {
+  const orgUnit: OrgUnit = { id: nextId('orgUnit'), ...draft }
+  return { ...state, orgUnits: repo.insert(state.orgUnits, orgUnit) }
+}
+
+export function updateOrgUnit(state: PeopleOpsState, id: string, patch: Partial<OrgUnitDraft>): PeopleOpsState {
+  requireOrgUnit(state, id)
+  return { ...state, orgUnits: repo.replace(state.orgUnits, id, patch) }
+}
+
+export function deleteOrgUnit(state: PeopleOpsState, id: string): PeopleOpsState {
+  requireOrgUnit(state, id)
+  return { ...state, orgUnits: repo.remove(state.orgUnits, id) }
+}
+
+/* ---------- Employments ---------- */
+
+export function listEmployments(state: PeopleOpsState): Employment[] {
+  return repo.list(state.employments)
+}
+
+export function getEmployment(state: PeopleOpsState, id: string): Employment | undefined {
+  return repo.get(state.employments, id)
+}
+
+export function createEmployment(state: PeopleOpsState, draft: EmploymentDraft): PeopleOpsState {
+  requireEmployee(state, draft.employeeId)
+  const employment: Employment = { id: nextId('employment'), ...draft }
+  return { ...state, employments: repo.insert(state.employments, employment) }
+}
+
+export function updateEmployment(
+  state: PeopleOpsState,
+  id: string,
+  patch: Partial<EmploymentDraft>,
+): PeopleOpsState {
+  requireEmployment(state, id)
+  if (patch.employeeId !== undefined) requireEmployee(state, patch.employeeId)
+  return { ...state, employments: repo.replace(state.employments, id, patch) }
+}
+
+export function deleteEmployment(state: PeopleOpsState, id: string): PeopleOpsState {
+  requireEmployment(state, id)
+  return { ...state, employments: repo.remove(state.employments, id) }
+}
+
+/* ---------- Requisitions ---------- */
+
+export function listRequisitions(state: PeopleOpsState): Requisition[] {
+  return repo.list(state.requisitions)
+}
+
+export function getRequisition(state: PeopleOpsState, id: string): Requisition | undefined {
+  return repo.get(state.requisitions, id)
+}
+
+export function createRequisition(state: PeopleOpsState, draft: RequisitionDraft): PeopleOpsState {
+  requireOrgUnit(state, draft.orgUnitId)
+  const requisition: Requisition = { id: nextId('requisition'), ...draft }
+  return { ...state, requisitions: repo.insert(state.requisitions, requisition) }
+}
+
+export function updateRequisition(
+  state: PeopleOpsState,
+  id: string,
+  patch: Partial<RequisitionDraft>,
+): PeopleOpsState {
+  requireRequisition(state, id)
+  if (patch.orgUnitId !== undefined) requireOrgUnit(state, patch.orgUnitId)
+  return { ...state, requisitions: repo.replace(state.requisitions, id, patch) }
+}
+
+export function deleteRequisition(state: PeopleOpsState, id: string): PeopleOpsState {
+  requireRequisition(state, id)
+  return { ...state, requisitions: repo.remove(state.requisitions, id) }
+}
+
 /* ---------- FK guards ---------- */
 
 function requireDepartment(state: PeopleOpsState, id: string): Department {
@@ -177,6 +281,24 @@ function requireLocation(state: PeopleOpsState, id: string): Location {
   const location = repo.get(state.locations, id)
   if (!location) throw new StoreError(`No location with id ${id}`)
   return location
+}
+
+function requireOrgUnit(state: PeopleOpsState, id: string): OrgUnit {
+  const orgUnit = repo.get(state.orgUnits, id)
+  if (!orgUnit) throw new StoreError(`No org unit with id ${id}`)
+  return orgUnit
+}
+
+function requireEmployment(state: PeopleOpsState, id: string): Employment {
+  const employment = repo.get(state.employments, id)
+  if (!employment) throw new StoreError(`No employment with id ${id}`)
+  return employment
+}
+
+function requireRequisition(state: PeopleOpsState, id: string): Requisition {
+  const requisition = repo.get(state.requisitions, id)
+  if (!requisition) throw new StoreError(`No requisition with id ${id}`)
+  return requisition
 }
 
 function requireBaseSalary(baseSalary: number): void {
