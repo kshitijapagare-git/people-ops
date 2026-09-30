@@ -5,6 +5,8 @@ import { resetIds } from '../lib/id'
 
 beforeEach(() => {
   resetIds()
+  // The hash survives between tests in one file; reset so each starts on Departments.
+  window.location.hash = ''
 })
 
 afterEach(() => {
