@@ -1,36 +1,21 @@
 import { useState, type FormEvent } from 'react'
-import { usePagination } from '../lib/usePagination'
+import { Pagination, usePagination } from '../components/Pagination'
 import { usePeopleOps } from '../state/PeopleOpsContext'
-import type { Department, DepartmentDraft } from '../types'
-import { Modal } from '../ui/Modal'
-import { Pagination } from '../ui/Pagination'
+import type { DepartmentDraft } from '../types'
 
 const blank: DepartmentDraft = { name: '', code: '' }
 
 export function DepartmentsPage() {
   const { departments, createDepartment, updateDepartment, deleteDepartment } = usePeopleOps()
-  const { page, totalPages, setPage, rows } = usePagination(departments)
-  const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<DepartmentDraft>(blank)
   const [editingId, setEditingId] = useState<string | null>(null)
-
-  function openCreate() {
-    setDraft(blank)
-    setEditingId(null)
-    setOpen(true)
-  }
-
-  function openEdit(department: Department) {
-    const { id, ...values } = department
-    setDraft(values)
-    setEditingId(id)
-    setOpen(true)
-  }
+  const [formOpen, setFormOpen] = useState(false)
+  const { page, pageCount, pageItems, setPage } = usePagination(departments)
 
   function close() {
-    setOpen(false)
-    setEditingId(null)
     setDraft(blank)
+    setEditingId(null)
+    setFormOpen(false)
   }
 
   function submit(event: FormEvent) {
@@ -41,15 +26,45 @@ export function DepartmentsPage() {
   }
 
   return (
-    <>
+    <section>
       <div className="page-header">
-        <h1>Departments</h1>
-        <button type="button" className="btn btn-primary" onClick={openCreate}>
+        <h2>Departments</h2>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => {
+            setDraft(blank)
+            setEditingId(null)
+            setFormOpen(true)
+          }}
+        >
           + Add department
         </button>
       </div>
-      <div className="card">
-        <table>
+      {formOpen && (
+        <form aria-label="Department form" className="card form-card" onSubmit={submit}>
+          <div className="form-grid">
+            <label>
+              Name
+              <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+            </label>
+            <label>
+              Code
+              <input value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
+            </label>
+          </div>
+          <div className="form-actions">
+            <button type="submit" className="btn btn-primary">
+              {editingId ? 'Save' : 'Add'}
+            </button>
+            <button type="button" className="btn" onClick={close}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+      <div className="card table-card">
+        <table className="table">
           <thead>
             <tr>
               <th>Name</th>
@@ -58,52 +73,39 @@ export function DepartmentsPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {departments.length === 0 && (
               <tr>
-                <td colSpan={3} className="empty">
+                <td className="empty" colSpan={3}>
                   No departments yet.
                 </td>
               </tr>
-            ) : (
-              rows.map((department) => (
-                <tr key={department.id}>
-                  <td>{department.name}</td>
-                  <td>{department.code}</td>
-                  <td>
-                    <div className="row-actions">
-                      <button type="button" className="btn btn-secondary btn-small" onClick={() => openEdit(department)}>
-                        Edit
-                      </button>
-                      <button type="button" className="btn btn-danger" onClick={() => deleteDepartment(department.id)}>
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
             )}
+            {pageItems.map((department) => (
+              <tr key={department.id}>
+                <td>{department.name}</td>
+                <td>{department.code}</td>
+                <td>
+                  <button
+                    type="button"
+                    className="btn-link"
+                    onClick={() => {
+                      setEditingId(department.id)
+                      setDraft({ name: department.name, code: department.code })
+                      setFormOpen(true)
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button type="button" className="btn-link danger" onClick={() => deleteDepartment(department.id)}>
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-
-      {open && (
-        <Modal
-          title={editingId ? 'Edit department' : 'New department'}
-          submitLabel={editingId ? 'Save department' : 'Add department'}
-          onClose={close}
-          onSubmit={submit}
-        >
-          <div className="field">
-            <label htmlFor="name">Name</label>
-            <input id="name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-          </div>
-          <div className="field">
-            <label htmlFor="code">Code</label>
-            <input id="code" value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
-          </div>
-        </Modal>
-      )}
-    </>
+      <Pagination page={page} pageCount={pageCount} onChange={setPage} />
+    </section>
   )
 }
