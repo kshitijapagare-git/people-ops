@@ -66,3 +66,44 @@ export interface Employment {
 }
 
 export type EmploymentDraft = Omit<Employment, 'id'>
+
+export type OrgUnitKind = 'DIVISION' | 'DEPARTMENT' | 'TEAM'
+
+/**
+ * DIVISION.parentId must be null.
+ * DEPARTMENT.parentId must reference an OrgUnit with kind DIVISION.
+ * TEAM.parentId must reference an OrgUnit with kind DEPARTMENT.
+ */
+export interface OrgUnit {
+  id: string
+  name: string
+  kind: OrgUnitKind
+  parentId: string | null
+}
+
+export type OrgUnitDraft = Omit<OrgUnit, 'id'>
+
+export type RequisitionStatus = 'DRAFT' | 'OPEN' | 'ON_HOLD' | 'FILLED' | 'CANCELLED'
+
+export type RequiredSkill = 'REACT' | 'TYPESCRIPT' | 'PYTHON' | 'SQL' | 'DEVOPS' | 'DESIGN' | 'QA'
+
+export interface Requisition {
+  id: string
+  /** FK -> OrgUnit.id; must resolve to an OrgUnit of kind TEAM. */
+  orgUnitId: string
+  /** FK -> Employee.id; must have an active Employment whose JobRole.isPeopleManager is true. */
+  hiringManagerId: string
+  positionTitle: string
+  /** Stores HTML. */
+  jobDescription: string
+  requiredSkills: RequiredSkill[]
+  /** Local YYYY-MM-DD string; never null, even in DRAFT. */
+  openFrom: string
+  /** Local YYYY-MM-DD string; must be strictly after openFrom. */
+  openUntil: string
+  /** Stored as integer minor units (e.g. cents); never a float. */
+  salaryOffered: number
+  status: RequisitionStatus
+}
+
+export type RequisitionDraft = Omit<Requisition, 'id'>
