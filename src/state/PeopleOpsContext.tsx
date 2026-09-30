@@ -6,10 +6,16 @@ import type {
   DepartmentDraft,
   Employee,
   EmployeeDraft,
+  Employment,
+  EmploymentDraft,
   JobRole,
   JobRoleDraft,
   Location,
   LocationDraft,
+  OrgUnit,
+  OrgUnitDraft,
+  Requisition,
+  RequisitionDraft,
 } from '../types'
 
 export interface PeopleOpsApi {
@@ -17,10 +23,16 @@ export interface PeopleOpsApi {
   employees: Employee[]
   jobRoles: JobRole[]
   locations: Location[]
+  employments: Employment[]
+  orgUnits: OrgUnit[]
+  requisitions: Requisition[]
   getDepartment: (id: string) => Department | undefined
   getEmployee: (id: string) => Employee | undefined
   getJobRole: (id: string) => JobRole | undefined
   getLocation: (id: string) => Location | undefined
+  getEmployment: (id: string) => Employment | undefined
+  getOrgUnit: (id: string) => OrgUnit | undefined
+  getRequisition: (id: string) => Requisition | undefined
   createDepartment: (draft: DepartmentDraft) => void
   updateDepartment: (id: string, patch: Partial<DepartmentDraft>) => void
   deleteDepartment: (id: string) => void
@@ -33,6 +45,15 @@ export interface PeopleOpsApi {
   createLocation: (draft: LocationDraft) => void
   updateLocation: (id: string, patch: Partial<LocationDraft>) => void
   deleteLocation: (id: string) => void
+  createEmployment: (draft: EmploymentDraft) => void
+  updateEmployment: (id: string, patch: Partial<EmploymentDraft>) => void
+  deleteEmployment: (id: string) => void
+  createOrgUnit: (draft: OrgUnitDraft) => void
+  updateOrgUnit: (id: string, patch: Partial<OrgUnitDraft>) => void
+  deleteOrgUnit: (id: string) => void
+  createRequisition: (draft: RequisitionDraft) => void
+  updateRequisition: (id: string, patch: Partial<RequisitionDraft>) => void
+  deleteRequisition: (id: string) => void
 }
 
 const PeopleOpsContext = createContext<PeopleOpsApi | null>(null)
@@ -54,10 +75,12 @@ export function PeopleOpsProvider({
       employees: store.listEmployees(state),
       jobRoles: store.listJobRoles(state),
       locations: store.listLocations(state),
+      employments: store.listEmployments(state),
       getDepartment: (id) => store.getDepartment(state, id),
       getEmployee: (id) => store.getEmployee(state, id),
       getJobRole: (id) => store.getJobRole(state, id),
       getLocation: (id) => store.getLocation(state, id),
+      getEmployment: (id) => store.getEmployment(state, id),
       createDepartment: (draft) => setState(store.createDepartment(state, draft)),
       updateDepartment: (id, patch) => setState(store.updateDepartment(state, id, patch)),
       deleteDepartment: (id) => setState(store.deleteDepartment(state, id)),
@@ -70,6 +93,19 @@ export function PeopleOpsProvider({
       createLocation: (draft) => setState(store.createLocation(state, draft)),
       updateLocation: (id, patch) => setState(store.updateLocation(state, id, patch)),
       deleteLocation: (id) => setState(store.deleteLocation(state, id)),
+      createEmployment: (draft) => setState(store.createEmployment(state, draft)),
+      updateEmployment: (id, patch) => setState(store.updateEmployment(state, id, patch)),
+      deleteEmployment: (id) => setState(store.deleteEmployment(state, id)),
+      orgUnits: store.listOrgUnits(state),
+      getOrgUnit: (id) => store.getOrgUnit(state, id),
+      createOrgUnit: (draft) => setState(store.createOrgUnit(state, draft)),
+      updateOrgUnit: (id, patch) => setState(store.updateOrgUnit(state, id, patch)),
+      deleteOrgUnit: (id) => setState(store.deleteOrgUnit(state, id)),
+      requisitions: store.listRequisitions(state),
+      getRequisition: (id) => store.getRequisition(state, id),
+      createRequisition: (draft) => setState(store.createRequisition(state, draft)),
+      updateRequisition: (id, patch) => setState(store.updateRequisition(state, id, patch)),
+      deleteRequisition: (id) => setState(store.deleteRequisition(state, id)),
     }),
     [state],
   )
